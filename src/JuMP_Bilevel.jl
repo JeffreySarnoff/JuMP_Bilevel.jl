@@ -1,4 +1,4 @@
-module BilevelJuMP
+module JuMP_Bilevel
 
 using MathOptInterface
 const MOI = MathOptInterface
