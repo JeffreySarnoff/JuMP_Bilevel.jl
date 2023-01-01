@@ -1,31 +1,22 @@
-# BilevelJuMP.jl
+JuMP_Bilevel.jl
 
 A bilevel optimization extension of the [JuMP](https://github.com/JuMP-dev/JuMP.jl) package.
 
-| **Build Status** |
-|:----------------:|
-| [![Build Status][build-img]][build-url] [![Codecov branch][codecov-img]][codecov-url] [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://joaquimg.github.io/BilevelJuMP.jl/dev/)|
-
-
-[build-img]: https://github.com/joaquimg/BilevelJuMP.jl/workflows/CI/badge.svg?branch=master
-[build-url]: https://github.com/joaquimg/BilevelJuMP.jl/actions?query=workflow%3ACI
-[codecov-img]: http://codecov.io/github/joaquimg/BilevelJuMP.jl/coverage.svg?branch=master
-[codecov-url]: http://codecov.io/github/joaquimg/BilevelJuMP.jl?branch=master
 
 ## Introduction
 
 BilevelJuMP is a package for modeling and solving bilevel optimization problems in Julia. As an extension of the JuMP package, BilevelJuMP allows users to employ the usual JuMP syntax with minor modifications to describe the problem and query solutions.
 
-BilevelJuMP is built on top of [MathOptInterface](https://github.com/JuMP-dev/MathOptInterface.jl) and makes strong use of its features to reformulate the problem as a single level problem and solve it with available MIP, NLP, and other solvers.
+JuMP_Bilevel is built on top of [MathOptInterface](https://github.com/JuMP-dev/MathOptInterface.jl) and makes strong use of its features to reformulate the problem as a single level problem and solve it with available MIP, NLP, and other solvers.
 
 The currently available methods are based on re-writing the problem using the KKT conditions of the lower level. For that we make strong use of [Dualization.jl](https://github.com/JuMP-dev/Dualization.jl)
 
 ## Example
 
 ```julia
-using JuMP, BilevelJuMP, SCIP
+using JuMP, JuMP_Bilevel, SCIP
 
-model = BilevelModel(SCIP.Optimizer, mode = BilevelJuMP.SOS1Mode())
+model = BilevelModel(SCIP.Optimizer, mode = JuMP_Bilevel.SOS1Mode())
 
 @variable(Lower(model), x)
 @variable(Upper(model), y)
@@ -52,15 +43,15 @@ value(x) # = 3.5 * 8/15 # = 1.86...
 value(y) # = 8/15 # = 0.53...
 ```
 
-The option `BilevelJuMP.SOS1Mode()` indicates that the solution method used
+The option `JuMP_Bilevel.SOS1Mode()` indicates that the solution method used
 will be a KKT reformulation emplying SOS1 to model complementarity constraints
 and solve the problem with MIP solvers (Cbc, Xpress, Gurobi, CPLEX, SCIP).
 
-Alternatively, the option `BilevelJuMP.IndicatorMode()` is almost equivalent to
+Alternatively, the option `Jump_Bilevel.IndicatorMode()` is almost equivalent to
 the previous. The main difference is that it relies on Indicator constraints
 instead. This kind of constraints is available in some MIP solvers.
 
-A third and classic option it the `BilevelJuMP.FortunyAmatMcCarlMode()`, which
+A third and classic option it the `JuMP_Bilevel.FortunyAmatMcCarlMode()`, which
 relies on the Fortuny-Amat and McCarl big-M method that requires a MIP solver
 with very basic functionality, i.e., just binary variables are needed.
 The main drawback of this method is that one must provide bounds for all primal
@@ -73,7 +64,7 @@ where `vp` and `vd` are, repspectively, the big M fallback values for primal
 and dual variables, these are used when some variables have no given bounds,
 otherwise the given bounds are used instead.
 
-Another option is `BilevelJuMP.ProductMode()` that reformulates the
+Another option is `JuMP_Bilevel.ProductMode()` that reformulates the
 complementarity constraints as products so that the problem can be solved by
 NLP (Ipopt, KNITRO) solvers or even MIP solvers with the aid of binary
 expansions
@@ -82,9 +73,9 @@ Note that binary expansions require variables to have upper and lower bounds.
 Also, note that the `Gurobi` solver supports products, but requires [setting the
 `"NonConvex"` options](https://github.com/jump-dev/Gurobi.jl#using-gurobi-v90-and-you-got-an-error-like-q-not-psd).
 
-Finally, one can use `BilevelJuMP.MixedMode(default = mode)` where `mode` is one
+Finally, one can use `JuMP_Bilevel.MixedMode(default = mode)` where `mode` is one
 of the other modes described above. With this method it is possible to set
-complementarity reformulations per constraint with `BilevelJuMP.set_mode(ctr, mode)`.
+complementarity reformulations per constraint with `JuMP_Bilevel.set_mode(ctr, mode)`.
 
 An alternative to complementarity constraint reformulation is the Strong Duality
 reformulation which add the constraint enforcing primal dual equality. The option
@@ -101,7 +92,7 @@ directly to the solver itself. For many solvers it is enough to use:
 ```julia
 SOLVER = Xpress.Optimizer()
 Q_SOLVER = QuadraticToBinary.Optimizer{Float64}(SOLVER)
-BilevelModel(()->Q_SOLVER, mode = BilevelJuMP.ProductMode(1e-5))
+BilevelModel(()->Q_SOLVER, mode = JuMP_Bilevel.ProductMode(1e-5))
 ```
 
 However, this might lead to some solver not supporting certain functionality like SCIP.
@@ -112,7 +103,7 @@ SOLVER = SCIP.Optimizer()
 CACHED_SOLVER = MOI.Utilities.CachingOptimizer(
     MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()), SOLVER)
 Q_SOLVER = QuadraticToBinary.Optimizer{Float64}(CACHED_SOLVER)
-BilevelModel(()->Q_SOLVER, mode = BilevelJuMP.ProductMode(1e-5))
+BilevelModel(()->Q_SOLVER, mode = JuMP_Bilevel.ProductMode(1e-5))
 ```
 Note that we used `()->Q_SOLVER` instead of just `Q_SOLVER` because `BilevelModel`
 requires as constructor and not an instance of an object.
@@ -135,7 +126,7 @@ It is possible to access the dual variable of `b` to use it in the upper level:
 
 ### Conic lower level
 
-BilevelJuMP allows users to write conic models in the lower level. However,
+JuMP_Bilevel allows users to write conic models in the lower level. However,
 solving this kind of problems is much harder and requires complex solution
 methods. Mosek's Conic MIP can be used with the aid of
 [QuadraticToBinary.jl](https://github.com/joaquimg/QuadraticToBinary.jl).
@@ -146,12 +137,12 @@ In this case we need to add a special, non-standard bridge, to Ipopt as follows:
 ```julia
 IPO_OPT = Ipopt.Optimizer(print_level=0)
 IPO = MOI.Bridges.Constraint.SOCtoNonConvexQuad{Float64}(IPO_OPT)
-BilevelModel(()->IPO, mode = BilevelJuMP.ProductMode(1e-5))
+BilevelModel(()->IPO, mode = JuMP_Bilevel.ProductMode(1e-5))
 ```
 
 ## Troubleshooting
 
-* Cbc has known bugs in its SOS1 constraints, so `BilevelJuMP.SOS1Mode` might
+* Cbc has known bugs in its SOS1 constraints, so `JuMP_Bilevel.SOS1Mode` might
 not work properly with Cbc.
 
 * For anonymous variables with `DualOf` use:
@@ -166,6 +157,6 @@ or if you are using
 [`Gurobi`](https://github.com/jump-dev/Gurobi.jl#using-gurobi-v90-and-you-got-an-error-like-q-not-psd)
 use:
 ```julia
-model = BilevelModel(Gurobi.Optimizer, mode = BilevelJuMP.SOS1Mode()) #or other mode
+model = BilevelModel(Gurobi.Optimizer, mode = JuMP_Bilevel.SOS1Mode()) #or other mode
 set_optimizer_attribute(model, "NonConvex", 2)
 ```
